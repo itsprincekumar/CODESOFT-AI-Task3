@@ -1,0 +1,24 @@
+import cv2
+import face_recognition
+
+# ======== Step 1: Load Known Face ========
+known_image = face_recognition.load_image_file("known.jpg")
+known_encoding = face_recognition.face_encodings(known_image)[0]
+
+# ======== Step 2: Load Unknown Image ========
+unknown_image = face_recognition.load_image_file("unknown.jpg")
+unknown_locations = face_recognition.face_locations(unknown_image)
+unknown_encodings = face_recognition.face_encodings(unknown_image, unknown_locations)
+
+# ======== Step 3: Compare and Annotate ========
+for (top, right, bottom, left), face_encoding in zip(unknown_locations, unknown_encodings):
+    match = face_recognition.compare_faces([known_encoding], face_encoding)[0]
+
+    name = "Match" if match else "Unknown"
+    cv2.rectangle(unknown_image, (left, top), (right, bottom), (0, 255, 0), 2)
+    cv2.putText(unknown_image, name, (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2)
+
+# ======== Step 4: Display Image ========
+cv2.imshow("Face Recognition", cv2.cvtColor(unknown_image, cv2.COLOR_RGB2BGR))
+cv2.waitKey(0)
+cv2.destroyAllWindows()
