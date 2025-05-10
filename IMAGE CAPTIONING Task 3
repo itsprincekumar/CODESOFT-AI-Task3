@@ -1,0 +1,63 @@
+import numpy as np
+from tensorflow.keras.applications.resnet50 import ResNet50, preprocess_input
+from tensorflow.keras.preprocessing import image
+from tensorflow.keras.models import Model, Sequential
+from tensorflow.keras.layers import Embedding, LSTM, Dense
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+
+# ======== Step 1: Image Feature Extraction ========
+def extract_features(img_path):
+    base_model = ResNet50(weights='imagenet')
+    model = Model(inputs=base_model.input, outputs=base_model.layers[-2].output)
+    img = image.load_img(img_path, target_size=(224, 224))
+    x = image.img_to_array(img)
+    x = np.expand_dims(x, axis=0)
+    x = preprocess_input(x)
+    features = model.predict(x, verbose=0)
+    return features
+
+# ======== Step 2: Dummy Caption Generator (Simulated) ========
+def create_captioning_model(vocab_size=5000, max_length=34):
+    model = Sequential()
+    model.add(Embedding(vocab_size, 256, input_length=max_length))
+    model.add(LSTM(256))
+    model.add(Dense(vocab_size, activation='softmax'))
+    return model
+
+# ======== Step 3: Generate Dummy Caption ========
+def generate_caption(photo_feature, tokenizer, model, max_length=34):
+    input_text = 'startseq'
+    for _ in range(max_length):
+        sequence = tokenizer.texts_to_sequences([input_text])[0]
+        sequence = pad_sequences([sequence], maxlen=max_length)
+        # Simulated word prediction (always returns 'word')
+        word = 'word'  # placeholder, replace with tokenizer logic and model prediction
+        input_text += ' ' + word
+        if word == 'endseq':
+            break
+    return input_text.replace('startseq', '').replace('endseq', '').strip()
+
+# ======== Simulated Tokenizer for Demo ========
+class DummyTokenizer:
+    def texts_to_sequences(self, texts):
+        return [[1, 2, 3]]  # dummy sequence
+
+# ======== Run the Captioning Pipeline ========
+def main():
+    # Path to your image
+    img_path = 'example.jpg'  # <-- Replace with actual image path
+
+    print("[INFO] Extracting features from image...")
+    features = extract_features(img_path)
+
+    print("[INFO] Creating captioning model...")
+    model = create_captioning_model()
+
+    print("[INFO] Generating caption...")
+    tokenizer = DummyTokenizer()
+    caption = generate_caption(features, tokenizer, model)
+
+    print("Generated Caption:", caption)
+
+if __name__ == "__main__":
+    main()
