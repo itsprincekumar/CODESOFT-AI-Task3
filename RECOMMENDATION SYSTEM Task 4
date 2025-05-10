@@ -1,0 +1,51 @@
+import pandas as pd
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.preprocessing import StandardScaler
+
+# ======= Step 1: Sample User Ratings Data =======
+# Rows: users, Columns: movies, Values: ratings
+data = {
+    'User': ['A', 'B', 'C', 'D', 'E'],
+    'Titanic': [5, 4, 1, 1, 2],
+    'Inception': [3, 5, 5, 2, 1],
+    'Avengers': [4, 5, 4, 1, 1],
+    'Frozen': [1, 1, 5, 4, 5],
+    'Coco': [2, 1, 5, 4, 5],
+}
+
+df = pd.DataFrame(data)
+df.set_index('User', inplace=True)
+
+# ======= Step 2: Compute Similarity Between Users =======
+# Normalize the data
+scaler = StandardScaler()
+normalized_ratings = scaler.fit_transform(df)
+
+# Compute cosine similarity
+similarity_matrix = cosine_similarity(normalized_ratings)
+
+# Convert similarity matrix to DataFrame
+similarity_df = pd.DataFrame(similarity_matrix, index=df.index, columns=df.index)
+
+# ======= Step 3: Recommend Movies =======
+def recommend_movies(user):
+    # Find the most similar user
+    similar_users = similarity_df[user].drop(user).sort_values(ascending=False)
+    top_user = similar_users.index[0]
+
+    # Recommend movies liked by top similar user but not rated highly by current user
+    user_ratings = df.loc[user]
+    top_user_ratings = df.loc[top_user]
+
+    # Recommend movies rated ≥4 by top_user and ≤2 by current user
+    recommendations = []
+    for movie in df.columns:
+        if top_user_ratings[movie] >= 4 and user_ratings[movie] <= 2:
+            recommendations.append(movie)
+
+    return recommendations
+
+# ======= Example Usage =======
+user = 'A'
+recommendations = recommend_movies(user)
+print(f"Recommended movies for User {user}: {recommendations}")
